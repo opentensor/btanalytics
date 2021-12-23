@@ -2,6 +2,7 @@ import torch
 import pandas as pd
 import bittensor as bt
 import streamlit as st
+import altair as alt
 
 
 @st.cache
@@ -43,9 +44,20 @@ def main():
 
     dividends = metagraph.dividends.data
     top_100_dividend_receivers = get_top_n(t=dividends, n=100, name='Dividends', hotkeys=metagraph.hotkeys)
-    st.write('Top 50 dividend receivers: ', top_100_dividend_receivers)
+    st.write('Top 100 dividend receivers: ', top_100_dividend_receivers)
 
-    st.write(dir(metagraph))
+    ranks = pd.DataFrame(ranks.numpy(), columns=['Rank'])
+    holdings = pd.DataFrame(holdings.numpy(), columns=['Holdings'])
+    dividends = pd.DataFrame(dividends.numpy(), columns=['Dividends'])
+    hotkeys = pd.DataFrame(metagraph.hotkeys, columns=['Public Key'])
+    combined_df = pd.concat([hotkeys, ranks, holdings, dividends], axis=1)
+    st.write(combined_df)
+
+    st.write('Dividends vs Holdings')
+    c = alt.Chart(combined_df).mark_circle().encode(
+        x='Holdings', y='Dividends',
+    )
+    st.altair_chart(c, use_container_width=True)
 
 
 # Press the green button in the gutter to run the script.
