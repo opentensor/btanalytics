@@ -11,39 +11,39 @@ def get_metagraph():
     return metagraph
 
 
+def get_top_n(t, n, name, hotkeys):
+    t = t.data
+    sorted_t, sorted_indices = torch.sort(t, descending=True)
+    top_n = list(map(lambda value: value.item(), sorted_t[:n]))
+    top_n_indices = list(map(lambda i: i.item(), sorted_indices[:n]))
+    top_n_public_keys = list(map(lambda i: hotkeys[i], top_n_indices))
+    top_n_df = pd.DataFrame(
+        list(zip(top_n_public_keys, top_n)),
+        index=top_n_indices,
+        columns=['Public Key', name]
+    )
+    return top_n_df
+
+
 def main():
     metagraph = get_metagraph()
 
-    st.title('Bittensor Network Summary')
+    st.title('Bittensor Network Analytics')
 
     active_nodes = metagraph.active.sum()
     st.write('Number of active nodes: ', active_nodes.item())
 
     ranks = metagraph.ranks.data
-    sorted_ranks, sorted_indices = torch.sort(ranks, descending=True)
-    st.write('Top 30 Bittensor nodes by rank:')
-    top_30 = list(map(lambda x: x.item(), sorted_ranks[:30]))
-    top_30_indices = list(map(lambda x: x.item(), sorted_indices[:30]))
-    top_30_public_keys = list(map(lambda x: metagraph.hotkeys[x.item()], sorted_indices[:30]))
-    top_30_df = pd.DataFrame(
-        list(zip(top_30_public_keys, top_30)),
-        index=top_30_indices,
-        columns=['Public Key', 'Rank']
-    )
-    st.write(top_30_df)
+    top_30_ranks = get_top_n(t=ranks, n=30, name='Rank', hotkeys=metagraph.hotkeys)
+    st.write('Top 30 nodes by rank: ', top_30_ranks)
 
     holdings = metagraph.stake.data
-    sorted_holdings, sorted_indices = torch.sort(holdings, descending=True)
-    st.write('Top 30 tao holders:')
-    top_30_holdings = list(map(lambda x: x.item(), sorted_holdings[:30]))
-    top_30_indices = list(map(lambda x: x.item(), sorted_indices[:30]))
-    top_30_public_keys = list(map(lambda x: metagraph.hotkeys[x.item()], sorted_indices[:30]))
-    top_30_holdings_df = pd.DataFrame(
-        list(zip(top_30_public_keys, top_30_holdings)),
-        index=top_30_indices,
-        columns=['Public Key', 'Rank']
-    )
-    st.write(top_30_holdings_df)
+    top_30_holders = get_top_n(t=holdings, n=30, name='Holdings', hotkeys=metagraph.hotkeys)
+    st.write('Top 30 holders of tao: ', top_30_holders)
+
+    dividends = metagraph.dividends.data
+    top_100_dividend_receivers = get_top_n(t=dividends, n=100, name='Dividends', hotkeys=metagraph.hotkeys)
+    st.write('Top 50 dividend receivers: ', top_100_dividend_receivers)
 
     st.write(dir(metagraph))
 
