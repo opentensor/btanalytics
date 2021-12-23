@@ -2,9 +2,17 @@ import torch
 import pandas as pd
 import bittensor as bt
 import streamlit as st
+import seaborn as sns
+import numpy as np
 import altair as alt
 import matplotlib.pyplot as plt
 
+# Turn off console because it doesnt play with
+# streamlit
+try:
+    bt.__use_console__ = False
+except:
+    pass
 
 @st.cache
 def get_metagraph():
@@ -12,6 +20,25 @@ def get_metagraph():
     metagraph.sync()
     return metagraph
 
+def metagraph_to_dataframe(metagraph):
+    index = metagraph.uids.tolist()
+    columns = [ 'uid', 'active', 'stake', 'rank', 'trust', 'consensus', 'incentive', 'dividends', 'emission']
+    df = pd.DataFrame( columns = columns, index = index )
+    for uid in metagraph.uids.tolist():
+        v = {
+            'uid': metagraph.uids[uid].item(),
+            'active': metagraph.active[uid].item(),             
+            'stake': metagraph.stake[uid].item(),             
+            'rank': metagraph.ranks[uid].item(),            
+            'trust': metagraph.trust[uid].item(),             
+            'consensus': metagraph.consensus[uid].item(),             
+            'incentive': metagraph.incentive[uid].item(),             
+            'dividends': metagraph.dividends[uid].item(),             
+            'emission': metagraph.emission[uid].item()
+        }
+        df.loc[uid] = pd.Series( v )
+    df['uid'] = df.index
+    return df
 
 def get_top_n(t, n, name, hotkeys):
     t = t.data
@@ -29,6 +56,8 @@ def get_top_n(t, n, name, hotkeys):
 
 def main():
     metagraph = get_metagraph()
+    print (metagraph)
+    df = metagraph_to_dataframe(metagraph)
 
     st.title('Bittensor Network Analytics')
 
@@ -69,19 +98,124 @@ def main():
     )
     st.altair_chart(c, use_container_width=True)
 
-    fig, ax = plt.subplots()
-    ax.scatter(combined_df['UID'], combined_df['Holdings'])
-    ax.set_title('Holdings vs UID')
+    markers = {1: "s", 0: "X"}
+    fig, ax = plt.subplots(figsize=(20, 5))
+    ax.set_title('Stake')
+    sns.scatterplot(
+        data = df, 
+        x = "uid", 
+        y = "stake", 
+        size = "stake",
+        hue = 'stake',
+        hue_norm = (0, 1000), 
+        style = "active", 
+        markers = markers
+    )
     st.pyplot(fig)
 
-    fig, ax = plt.subplots()
-    ax.scatter(combined_df['UID'], combined_df['Rank'])
-    ax.set_title('Rank vs UID')
+    markers = {1: "s", 0: "X"}
+    fig, ax = plt.subplots(figsize=(20, 5))
+    ax.set_title('Rank')
+    sns.scatterplot(
+        data = df, 
+        x = "uid",
+        y = "rank",
+        size = "consensus", 
+        hue = 'incentive', 
+        style = "active", 
+        markers = markers
+    )
     st.pyplot(fig)
 
-    fig, ax = plt.subplots()
-    ax.scatter(combined_df['UID'], combined_df['Dividend'])
-    ax.set_title('Dividend vs UID')
+    markers = {1: "s", 0: "X"}
+    fig, ax = plt.subplots(figsize=(20, 5))
+    ax.set_title('Incentive')
+    sns.scatterplot(
+        data = df, 
+        x = "uid",
+        y = "incentive",
+        size = "rank",
+        hue = 'stake', 
+        hue_norm = (0, 1000), 
+        style = "active", 
+        markers = markers
+    )
+    st.pyplot(fig)
+
+    markers = {1: "s", 0: "X"}
+    fig, ax = plt.subplots(figsize=(20, 5))
+    ax.set_title('Trust')
+    sns.scatterplot(
+        data = df, 
+        x = "uid", 
+        y = "trust", 
+        size = "rank",
+        hue = 'stake',
+        hue_norm = (0, 1000), 
+        style = "active", 
+        markers = markers
+    )
+    st.pyplot(fig)
+
+    markers = {1: "s", 0: "X"}
+    fig, ax = plt.subplots(figsize=(20, 5))
+    ax.set_title('Consensus')
+    sns.scatterplot (
+        data = df, 
+        x = "uid", 
+        y = "consensus", 
+        size = "rank", 
+        hue = 'stake', 
+        hue_norm = (0, 1000), 
+        style = "active", 
+        markers = markers
+    )
+    st.pyplot(fig)
+
+    markers = {1: "s", 0: "X"}
+    fig, ax = plt.subplots(figsize=(20, 5))
+    ax.set_title('Dividends')
+    sns.scatterplot(
+        data = df, 
+        x = "uid", 
+        y = "dividends", 
+        size = "stake", 
+        hue = 'stake', 
+        hue_norm = (0, 1000), 
+        style = "active", 
+        markers = markers
+    )
+    st.pyplot(fig)
+
+    markers = {1: "s", 0: "X"}
+    fig, ax = plt.subplots(figsize=(20, 5))
+    ax.set_title('Emission')
+    sns.scatterplot(
+        data = df, 
+        x = "uid", 
+        y = "emission", 
+        size = "rank",
+        hue = 'stake',
+        hue_norm = (0, 1000), 
+        style = "active", 
+        markers = markers
+    )
+    st.pyplot(fig)
+
+    fig, ax = plt.subplots(figsize=(15, 15))
+    ax.set_title('Weights')
+    sns.heatmap(
+        metagraph.W.numpy(),
+        vmin=0, vmax=np.mean(metagraph.W.numpy()), center=0
+    )
+    st.pyplot(fig)
+
+    fig, ax = plt.subplots(figsize=(15, 15))
+    ax.set_title('Bond Ownership')
+    sns.heatmap(
+        metagraph.B.numpy(),
+        vmin=0, vmax=2*np.mean(metagraph.B.numpy()), center=0
+    )
     st.pyplot(fig)
 
 

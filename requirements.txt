@@ -2,3 +2,5 @@ bittensor
 streamlit
 torch
 matplotlib
+seaborn
+numpy
