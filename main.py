@@ -51,9 +51,13 @@ def main():
     dividends = pd.DataFrame(dividends.numpy(), columns=['Dividends'])
     hotkeys = pd.DataFrame(metagraph.hotkeys, columns=['Public Key'])
     combined_df = pd.concat([hotkeys, ranks, holdings, dividends], axis=1)
-    st.write(combined_df)
+    # st.write(combined_df)
 
     st.write('Dividends vs Holdings')
+    min_holding = st.slider('Minimum Holdings', 1, 100000)
+    max_holding = st.slider('Maximum Holdings', 1, 100000)
+    combined_df = combined_df[combined_df.Holdings >= min_holding]
+    combined_df = combined_df[combined_df.Holdings <= max_holding]
     c = alt.Chart(combined_df).mark_circle().encode(
         x='Holdings', y='Dividends',
     )
