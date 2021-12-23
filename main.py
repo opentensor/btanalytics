@@ -46,7 +46,12 @@ def main():
     top_100_dividend_receivers = get_top_n(t=dividends, n=100, name='Dividends', hotkeys=metagraph.hotkeys)
     st.write('Top 100 dividend receivers: ', top_100_dividend_receivers)
 
+    incentives = metagraph.incentive.data
+    top_30_incentive_receivers = get_top_n(t=incentives, n=30, name='Incentive', hotkeys=metagraph.hotkeys)
+    st.write('Top 30 incentive receivers: ', top_30_incentive_receivers)
+
     ranks = pd.DataFrame(ranks.numpy(), columns=['Rank'])
+    incentives = pd.DataFrame(incentives.numpy(), columns=['Incentive'])
     holdings = pd.DataFrame(holdings.numpy(), columns=['Holdings'])
     dividends = pd.DataFrame(dividends.numpy(), columns=['Dividends'])
     hotkeys = pd.DataFrame(metagraph.hotkeys, columns=['Public Key'])
@@ -62,6 +67,9 @@ def main():
         x='Holdings', y='Dividends',
     )
     st.altair_chart(c, use_container_width=True)
+
+
+
 
 
 # Press the green button in the gutter to run the script.
