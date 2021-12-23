@@ -3,6 +3,7 @@ import pandas as pd
 import bittensor as bt
 import streamlit as st
 import altair as alt
+import matplotlib.pyplot as plt
 
 
 @st.cache
@@ -43,7 +44,7 @@ def main():
     st.write('Top 30 holders of tao: ', top_30_holders)
 
     dividends = metagraph.dividends.data
-    top_100_dividend_receivers = get_top_n(t=dividends, n=100, name='Dividends', hotkeys=metagraph.hotkeys)
+    top_100_dividend_receivers = get_top_n(t=dividends, n=100, name='Dividend', hotkeys=metagraph.hotkeys)
     st.write('Top 100 dividend receivers: ', top_100_dividend_receivers)
 
     incentives = metagraph.incentive.data
@@ -53,27 +54,36 @@ def main():
     ranks = pd.DataFrame(ranks.numpy(), columns=['Rank'])
     incentives = pd.DataFrame(incentives.numpy(), columns=['Incentive'])
     holdings = pd.DataFrame(holdings.numpy(), columns=['Holdings'])
-    dividends = pd.DataFrame(dividends.numpy(), columns=['Dividends'])
+    dividends = pd.DataFrame(dividends.numpy(), columns=['Dividend'])
     hotkeys = pd.DataFrame(metagraph.hotkeys, columns=['Public Key'])
-    combined_df = pd.concat([hotkeys, ranks, holdings, dividends], axis=1)
+    combined_df = pd.concat([hotkeys, ranks, holdings, dividends, incentives], axis=1)
+    combined_df['UID'] = combined_df.index
     # st.write(combined_df)
 
     st.write('Dividends vs Holdings')
-    min_holding = st.slider('Minimum Holdings', 1, 100000)
-    max_holding = st.slider('Maximum Holdings', 1, 100000)
+    min_holding, max_holding = st.slider("Min Holdings", 1, 100000), st.slider('Max Holdings', 1, 100000)
     combined_df = combined_df[combined_df.Holdings >= min_holding]
     combined_df = combined_df[combined_df.Holdings <= max_holding]
     c = alt.Chart(combined_df).mark_circle().encode(
-        x='Holdings', y='Dividends',
+        x='Holdings', y='Dividend',
     )
     st.altair_chart(c, use_container_width=True)
 
+    fig, ax = plt.subplots()
+    ax.scatter(combined_df['UID'], combined_df['Holdings'])
+    ax.set_title('Holdings vs UID')
+    st.pyplot(fig)
+
+    fig, ax = plt.subplots()
+    ax.scatter(combined_df['UID'], combined_df['Rank'])
+    ax.set_title('Rank vs UID')
+    st.pyplot(fig)
+
+    fig, ax = plt.subplots()
+    ax.scatter(combined_df['UID'], combined_df['Dividend'])
+    ax.set_title('Dividend vs UID')
+    st.pyplot(fig)
 
 
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
